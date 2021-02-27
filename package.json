@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "tsc": "tsc --build tsconfig.json --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
+    "serve": "tsc-watch --onSuccess 'node ./dist/index.js'",
+    "build": "tsc",
+    "prestart": "npm run build",
+    "start": "node ."
   },
   "author": "",
   "license": "ISC",

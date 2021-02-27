@@ -1,5 +1,5 @@
 import * as FS from 'fs';
-import { from, Observable } from 'rxjs';
+import { from } from 'rxjs';
 import { concatAll, map, mergeAll, reduce, switchMap } from 'rxjs/operators';
 import * as sqlite from 'sqlite3';
 import { Temperature, Node } from '../models/models';
@@ -12,39 +12,35 @@ export function init() {
     }
     db = new sqlite.Database('therm.sqlite');
     db.run('CREATE TABLE IF NOT EXISTS node (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT UNIQUE ON CONFLICT IGNORE, created_at TEXT DEFAULT CURRENT_TIMESTAMP)')
-      .run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER PRIMARY KEY AUTOINCREMENT, nodeId NUMBER, value REAL, created_at TEXT DEFAULT CURRENT_TIMESTAMP)');
+      .run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER PRIMARY KEY AUTOINCREMENT, nodeId NUMBER, value REAL, date TEXT DEFAULT CURRENT_TIMESTAMP)');
     console.log('database initialized');
 }
 
-export function addNode(node: string): Observable<number> {
-    const id$ = new Observable<number>((subscriber) =>
-    db.run(`INSERT INTO node (nom) VALUES (?)`, [node], (err) => {
-          if (err) {
-              throw err;
-          }
-          subscriber.next(this.lastID);
-       }));
+export function addNode(node: string): Promise<number> {
+    const id$ = new Promise<number>((resolve) =>
+    db.run(`INSERT INTO node (nom) VALUES (?)`, [node], function(err) {
+        if (err) { throw err; }
+        resolve(this.lastID);
+    }));
     return id$;
 }
 
-export function addTemperature(node: string, value: number, date: Date): Observable<number> {
-    const id$ = new Observable<number>((subscriber) =>
-    db.run(`INSERT INTO temperature (nodeId, value, date) SELECT nodeId, ?:2; ?:3 FROM node WHERE nom LIKE ?:1`, [node, value, date], (err) => {
-          if (err) {
-              throw err;
-          }
-          subscriber.next(this.lastID);
-       }));
+export function addTemperature(nodeId: number, value: number, date: Date): Promise<number> {
+    const id$ = new Promise<number>((resolve) =>
+    db.run(`INSERT INTO temperature (nodeId, value, date) VALUES (?,?,?)`, [nodeId, value, date.toJSON()], function(err) {
+        if (err) { throw err; }
+        resolve(this.lastID);
+    }));
     return id$;
 }
 
-export function getNodes(): Observable<Node[]> {
-    return new Observable<Node[]>(subscriber => {
+export function getNodes(): Promise<Node[]> {
+    return new Promise<Node[]>(resolve => {
         db.all('SELECT * FROM node', (err, rows) => {
             if (err) {
                 throw err;
             }
-            subscriber.next(rows.map(r => ({
+            resolve(rows.map(r => ({
                 id: r.id,
                 nom: r.nom,
                 createdAt: r.created_at,
@@ -53,13 +49,16 @@ export function getNodes(): Observable<Node[]> {
     });
 }
 
-export function getTemperatures(node: Node, dateFrom: Date, dateTo: Date): Observable<Node> {
-    return new Observable<Node>(subscriber => {
+export function getTemperatures(node: Node, dateFrom: Date, dateTo: Date): Promise<Node> {
+    return new Promise<Node>(resolve => {
         db.all('SELECT * FROM temperature WHERE nodeId = ? AND ? <= date AND date < ?', [node.id, dateFrom, dateTo, ], (err , rows) => {
             if (err) {
                 throw err;
             }
-            subscriber.next({
+
+            console.log(rows);
+            
+            resolve({
                 ...node,
                 temperatures: rows.map(r => ({
                     date: r.date,
@@ -71,11 +70,12 @@ export function getTemperatures(node: Node, dateFrom: Date, dateTo: Date): Obser
 }
 
 
-export function getNodesWithTemperatures(dateFrom: Date, dateTo: Date): Observable<Node[]> {
-    return getNodes().pipe(
-        switchMap(nodes => from(nodes)),
-        map(node => getTemperatures(node, dateFrom, dateTo)),
-        mergeAll(),
-        reduce((acc, value) => [...acc, value], [])
-    );
+export function getNodesWithTemperatures(dateFrom: Date, dateTo: Date): Promise<Node[]> {
+    return getNodes().then(nodes => {
+        return from(nodes).pipe(
+            map(node => getTemperatures(node, dateFrom, dateTo)),
+            mergeAll(),
+            reduce((acc, value) => [...acc, value], [])
+        ).toPromise()
+    });
 }
