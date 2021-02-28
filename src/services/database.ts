@@ -52,12 +52,8 @@ export function getNodes(): Promise<Node[]> {
 export function getTemperatures(node: Node, dateFrom: Date, dateTo: Date): Promise<Node> {
     return new Promise<Node>(resolve => {
         db.all('SELECT * FROM temperature WHERE nodeId = ? AND ? <= date AND date < ?', [node.id, dateFrom, dateTo, ], (err , rows) => {
-            if (err) {
-                throw err;
-            }
+            if (err) { throw err; }
 
-            console.log(rows);
-            
             resolve({
                 ...node,
                 temperatures: rows.map(r => ({
