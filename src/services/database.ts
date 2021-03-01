@@ -27,11 +27,22 @@ export function addNode(node: string): Promise<number> {
 
 export function addTemperature(nodeId: number, value: number, date: Date): Promise<number> {
     const id$ = new Promise<number>((resolve) =>
-    db.run(`INSERT INTO temperature (nodeId, value, date) VALUES (?,?,?)`, [nodeId, value, date.toJSON()], function(err) {
+    db.run(`INSERT INTO temperature (nodeId, value, date) VALUES (?,?,?)`, [nodeId, value, date], function(err) {
         if (err) { throw err; }
         resolve(this.lastID);
     }));
     return id$;
+}
+
+export function getNodeId(node: string): Promise<number> {
+    return new Promise<number>((resolve) => db.get('SELECT id FROM node WHERE nom LIKE ?', [node], function (err, row) {
+        if (err) { throw err; } 
+        if (row) {
+            resolve(row.id);
+        } else {
+            resolve(undefined);
+        }
+    }));
 }
 
 export function getNodes(): Promise<Node[]> {
@@ -51,13 +62,13 @@ export function getNodes(): Promise<Node[]> {
 
 export function getTemperatures(node: Node, dateFrom: Date, dateTo: Date): Promise<Node> {
     return new Promise<Node>(resolve => {
-        db.all('SELECT * FROM temperature WHERE nodeId = ? AND ? <= date AND date < ?', [node.id, dateFrom, dateTo, ], (err , rows) => {
+        db.all('SELECT round(date) as date, value FROM temperature WHERE nodeId = ? AND ? <= date AND date < ?', [node.id, dateFrom, dateTo, ], (err , rows) => {
             if (err) { throw err; }
-
+            
             resolve({
                 ...node,
                 temperatures: rows.map(r => ({
-                    date: r.date,
+                    date: new Date(r.date),
                     value: r.value,
                 }))
             });

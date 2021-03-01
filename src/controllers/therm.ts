@@ -21,7 +21,11 @@ export async function add(req: Express.Request, res: Express.Response): Promise<
     value: req.body.value,  
   }
 
-  const nodeId = await Database.addNode(therm.node);
+  
+  let nodeId = await Database.getNodeId(therm.node);
+  if (!nodeId) {
+    nodeId = await Database.addNode(therm.node);
+  }
   const tempId = await Database.addTemperature(nodeId, therm.value, therm.date);
   res.sendStatus(200);
 }
@@ -33,7 +37,7 @@ export async function get(req: Express.Request, res: Express.Response) {
   }
 
   const dateFrom = new Date(req.params.dateFrom);
-  const dateTo = new Date(req.params.toDate);
+  const dateTo = new Date(req.params.dateTo);
   const values = await Database.getNodesWithTemperatures(dateFrom, dateTo);
     
   return res.send(values);
