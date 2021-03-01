@@ -2,6 +2,9 @@ import * as Express from 'express';
 import * as ThermController from '../controllers/therm';
 
 export default function(app: Express.Application) {
+  app.route('/nodes')
+    .get(ThermController.getNodes);
+
   app.route('/therm')
     .post(ThermController.add);
 

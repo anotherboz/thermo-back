@@ -3,6 +3,11 @@ import { Therm } from '../models/models';
 import term from '../routes/term';
 import * as Database from '../services/database';
 
+export async function getNodes(req: Express.Request, res: Express.Response) {
+  const nodes = await Database.getNodes();
+  res.send(JSON.stringify(nodes));
+}
+
 export async function add(req: Express.Request, res: Express.Response): Promise<void> {
   if (Number.parseInt(req.headers['content-length'], 10) > 2000) {
       res.statusMessage = 'Payload Too Large';
@@ -20,7 +25,6 @@ export async function add(req: Express.Request, res: Express.Response): Promise<
     date: req.body.date ?? new Date(),
     value: req.body.value,  
   }
-
   
   let nodeId = await Database.getNodeId(therm.node);
   if (!nodeId) {
