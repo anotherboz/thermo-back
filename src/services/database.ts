@@ -11,14 +11,15 @@ export function init() {
         return;
     }
     db = new sqlite.Database('therm.sqlite');
-    db.run('CREATE TABLE IF NOT EXISTS node (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT UNIQUE ON CONFLICT IGNORE, created_at TEXT DEFAULT CURRENT_TIMESTAMP)')
+    db.run('CREATE TABLE IF NOT EXISTS node (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT UNIQUE ON CONFLICT IGNORE, created_at TEXT DEFAULT CURRENT_TIMESTAMP  \
+                min INTERGER, max INTERGER, redFrom INTERGER, redTo INTERGER, yellowFrom INTERGER; yellowTo INTERGER, minorTicks INTERGER )')
       .run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER PRIMARY KEY AUTOINCREMENT, nodeId NUMBER, value REAL, date TEXT DEFAULT CURRENT_TIMESTAMP)');
     console.log('database initialized');
 }
 
 export function addNode(node: string): Promise<number> {
     const id$ = new Promise<number>((resolve) =>
-    db.run(`INSERT INTO node (nom) VALUES (?)`, [node], function(err) {
+    db.run(`INSERT INTO node (nom, min, max, redFrom, redTo, yellowFrom, yellowTo, minorTick) VALUES (?)`, [node, 0, 60, 35, 60, 25, 35, 5], function(err) {
         if (err) { throw err; }
         resolve(this.lastID);
     }));
@@ -55,6 +56,15 @@ export function getNodes(): Promise<Node[]> {
                 id: r.id,
                 nom: r.nom,
                 createdAt: r.created_at,
+                config: {
+                    min: r.min,
+                    max: r.max,
+                    redFrom: r.redFrom,
+                    redTo: r.redTo,
+                    yellowFrom: r.yellowFrom,
+                    yellowTo: r.yellowTo,
+                    minorTick: r.minorTick
+                }
             })));
         });
     });

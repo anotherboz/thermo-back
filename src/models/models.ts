@@ -9,6 +9,15 @@ export interface Node {
     nom: string;
     createdAt: Date;
     temperatures: Temperature[];
+    config: {
+        min: number;
+        max: number;
+        redFrom: number;
+        redTo: number;
+        yellowFrom: number;
+        yellowTo: number;
+        minorTicks: number
+      }
 }
 
 export interface Temperature {
