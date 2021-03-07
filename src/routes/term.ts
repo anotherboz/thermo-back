@@ -5,9 +5,15 @@ export default function(app: Express.Application) {
   app.route('/nodes')
     .get(ThermController.getNodes);
 
+  app.route('/node/:id/config')
+    .post(ThermController.setConfig);
+
   app.route('/therm')
     .post(ThermController.add);
 
-  app.route('/therm/:dateFrom/:dateTo')
-    .get(ThermController.get);
+  app.route('/therm/:id/:dateFrom/:dateTo')
+    .get(ThermController.getOne);
+
+  app.route('/therms/:dateFrom/:dateTo')
+    .get(ThermController.getAll);
 }

@@ -1,11 +1,11 @@
 import * as Express from 'express';
-import { Therm } from '../models/models';
+import { Config, Therm } from '../models/models';
 import term from '../routes/term';
 import * as Database from '../services/database';
 
 export async function getNodes(req: Express.Request, res: Express.Response) {
   const nodes = await Database.getNodes();
-  res.send(JSON.stringify(nodes));
+  res.json(nodes);
 }
 
 export async function add(req: Express.Request, res: Express.Response): Promise<void> {
@@ -34,7 +34,7 @@ export async function add(req: Express.Request, res: Express.Response): Promise<
   res.sendStatus(200);
 }
 
-export async function get(req: Express.Request, res: Express.Response) {
+export async function getAll(req: Express.Request, res: Express.Response) {
   if (req.params.dateFrom == null || req.params.dateTo == null) {
     res.sendStatus(400);
     return;
@@ -44,5 +44,31 @@ export async function get(req: Express.Request, res: Express.Response) {
   const dateTo = new Date(req.params.dateTo);
   const values = await Database.getNodesWithTemperatures(dateFrom, dateTo);
     
-  return res.send(values);
+  return res.json(values);
+}
+
+export async function getOne(req: Express.Request, res: Express.Response) {
+  if (req.params.id == null || req.params.dateFrom == null || req.params.dateTo == null) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const id = Number.parseInt(req.params.id);
+  const dateFrom = new Date(req.params.dateFrom);
+  const dateTo = new Date(req.params.dateTo);
+  const values = await Database.getNodeWithTemperatures(id, dateFrom, dateTo);
+    
+  return res.json(values);
+}
+
+export async function setConfig(req: Express.Request, res: Express.Response) {
+  if (req.params.id == null || req.body.config == null) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const id = Number.parseInt(req.params.id);
+  const config = req.body.config;
+  const success = await Database.updateConfig(id, config);
+  return res.sendStatus(success ? 200 : 500);
 }
