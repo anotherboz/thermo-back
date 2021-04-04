@@ -17,14 +17,4 @@ export default function(app: Express.Application) {
 
   app.route('/therms/:dateFrom/:dateTo')
     .get(ThermController.getAll);
-
-  app.route('/users')
-    .get(UserController.get);
-
-  app.route('/user/:id')
-    .patch(UserController.update);
-
-  app.route('/user')
-    .post(UserController.add);
-
 }
