@@ -2,7 +2,7 @@ import * as FS from 'fs';
 import { from } from 'rxjs';
 import { concatAll, map, mergeAll, reduce, switchMap } from 'rxjs/operators';
 import * as sqlite from 'sqlite3';
-import { Temperature, Node, Config } from '../models/models';
+import { Temperature, Node, Config, User } from '../models/models';
 
 let db: sqlite.Database;
 
@@ -13,7 +13,9 @@ export function init() {
     db = new sqlite.Database('therm.sqlite');
     db.run('CREATE TABLE IF NOT EXISTS node (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT UNIQUE ON CONFLICT IGNORE, created_at TEXT DEFAULT CURRENT_TIMESTAMP, \
         min INTERGER, max INTERGER, redFrom INTERGER, redTo INTERGER, yellowFrom INTERGER, yellowTo INTERGER, minorTicks INTERGER )')
-      .run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER PRIMARY KEY AUTOINCREMENT, nodeId NUMBER, value REAL, date TEXT DEFAULT CURRENT_TIMESTAMP)');
+      .run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER PRIMARY KEY AUTOINCREMENT, nodeId NUMBER, value REAL, date TEXT DEFAULT CURRENT_TIMESTAMP)')
+      .run('CREATE TABLE IF NOT EXISTS users (id INTERGER PRIMARY KEY AUTOINCREMENT, mail TEXT, limit TEXT, nodes TEXT');
+
     console.log('database initialized');
 }
 
@@ -126,10 +128,63 @@ export function getNodesWithTemperatures(dateFrom: Date, dateTo: Date): Promise<
     });
 }
 
-export function updateConfig(id: number, config: Config): Promise<boolean> {
+export function updateNodeConfig(id: number, config: Config): Promise<boolean> {
     return new Promise<boolean>(resolve => {
         db.run('UPDATE node SET min = ?, max = ?, redFrom = ?, redTo = ?, yellowFrom = ?, yellowTo = ?, minorTicks = ? WHERE id = ?', 
         [config.min, config.max, config.redFrom, config.redTo, config.yellowFrom, config.yellowTo, config.minorTicks, id],
         (err) => resolve(err == null));
+    });
+}
+
+export function getUsers(): Promise<User[]> {
+    return new Promise<User[]>(resolve => {
+        db.all('SELECT id, mail, limit, nodes FROM user', (err, rows) => {
+            if (err) {
+                throw err;
+            }
+            return rows.map(row => ({
+                id: Number.parseInt(row.id),
+                mail: row.mail,
+                limit: row.limit,
+                nodeIds: (row.nodeIds as string).split(',').map(s => Number.parseInt(s)),
+            }));
+        })
+    });
+}
+
+export function getUserId(mail: string): Promise<number> {
+    return new Promise<number>(resolve => {
+        db.get('SELECT id FROM user WHERE mail = ?', [mail], (err, row) => {
+            if (err) {
+                throw err;
+            }
+            return row.id;
+        })
+    });
+}
+
+export function addUser(user: User): Promise<number> {
+    return new Promise<number>(resolve => {
+        db.run('INSERT INTO user (mail, limit, nodeIds) VALUE (?, ?, ?)', [
+            user.id, user.mail, user.limit, user.nodeIds.join(',')
+        ], (err) => {
+            if (err) {
+                throw err;
+            }
+            resolve(this.lastID);
+        });
+    });
+}
+
+export function updateUser(user: User): Promise<boolean> {
+    return new Promise<boolean>(resolve => {
+        db.run('UPDATE user SET mail = ?, limit = ? , nodeIds = ? WHERE id = ?', [
+            user.mail, user.limit, user.nodeIds.join(','), user.id
+        ], (err) => {
+            if (err) {
+                throw err;
+            }
+            resolve(this.lastID);
+        });
     });
 }

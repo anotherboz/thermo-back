@@ -69,6 +69,6 @@ export async function setConfig(req: Express.Request, res: Express.Response) {
 
   const id = Number.parseInt(req.params.id);
   const config = req.body.config;
-  const success = await Database.updateConfig(id, config);
+  const success = await Database.updateNodeConfig(id, config);
   return res.sendStatus(success ? 200 : 500);
 }

@@ -27,3 +27,10 @@ export interface Temperature {
     value: number;
 }
 
+export interface User {
+    id: number;
+    mail: string;
+    limit: string;
+    nodeIds: number[];
+}
+

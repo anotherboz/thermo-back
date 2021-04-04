@@ -1,5 +1,6 @@
 import { json, urlencoded } from 'body-parser';
 import therm from './routes/term';
+import user from './routes/user';
 import * as Database from './services/database';
 
 import express from 'express';
@@ -22,7 +23,7 @@ app.route('*').options((req, res) => {
 
 Database.init();
 therm(app); // register the route
-
+user(app);
 
 // start the Express server
 app.listen(port, () => {
