@@ -2,7 +2,6 @@ import * as Database from '../../services/database';
 import * as sqlite3 from 'sqlite3';
 import { open } from 'sqlite';  // required for async operations
 import * as fs from 'fs';
-import { delay } from 'rxjs/operators';
 
 describe('database service', function() {
     beforeAll(async () => {
@@ -15,8 +14,8 @@ describe('database service', function() {
     afterAll(async () => {
         try {
             const stats = await fs.promises.stat('therm.sqlite.ori');
-            // await fs.promises.rm('therm.sqlite');
-            // await fs.promises.rename('therm.sqlite.ori', 'therm.sqlite');
+            await fs.promises.rm('therm.sqlite');
+            await fs.promises.rename('therm.sqlite.ori', 'therm.sqlite');
         } catch {}
     });
 
@@ -149,4 +148,72 @@ describe('database service', function() {
             fail(err);
         }
     });
+
+    it('users', async () => {
+        await Database.init();
+        let userId1 = await Database.addUser({
+            id: undefined,
+            mail: 'user1@mail',
+            limit: 'red',
+            nodeIds: [1, 2, 3]
+        });
+        let userId2 = await Database.addUser({
+            id: undefined,
+            mail: 'user2@mail',
+            limit: 'yellow',
+            nodeIds: [4, 5, 6]
+        });
+        let userId3 = await Database.addUser({
+            id: undefined,
+            mail: 'user3@mail',
+            limit: 'red',
+            nodeIds: []
+        });
+
+        expect(userId1).toBe(1);
+        expect(userId2).toBe(2);
+        expect(userId3).toBe(3);
+        
+        let users = await Database.getUsers();
+        expect(users).toEqual(expect.arrayContaining([
+            expect.objectContaining({
+                id: 1,
+                mail: 'user1@mail',
+                limit: 'red',
+                nodeIds: [1, 2, 3]
+            }),
+            expect.objectContaining({
+                id: 2,
+                mail: 'user2@mail',
+                limit: 'yellow',
+                nodeIds: [4, 5, 6]
+            }),
+            expect.objectContaining({
+                id: 3,
+                mail: 'user3@mail',
+                limit: 'red',
+                nodeIds: []
+            })
+        ]));
+
+        await Database.removeUser(2);
+        users = await Database.getUsers();
+        expect(users.length).toBe(2);
+        expect(users).toEqual(expect.arrayContaining([
+            expect.objectContaining({
+                id: 1,
+                mail: 'user1@mail',
+            }),
+            expect.objectContaining({
+                id: 3,
+                mail: 'user3@mail',
+            })
+        ]));
+
+        await Database.removeAllUsers();
+        users = await Database.getUsers();
+        expect(users.length).toBe(0);
+
+        await Database.close();
+    })
 });

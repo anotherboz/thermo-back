@@ -14,7 +14,7 @@ export function init(): Promise<void> {
     db.run('CREATE TABLE IF NOT EXISTS node (id INTEGER PRIMARY KEY, nom TEXT UNIQUE ON CONFLICT IGNORE, created_at TEXT DEFAULT CURRENT_TIMESTAMP, \
         min INTERGER, max INTERGER, redFrom INTERGER, redTo INTERGER, yellowFrom INTERGER, yellowTo INTERGER, minorTicks INTERGER )')
       .run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER PRIMARY KEY, nodeId NUMBER, value REAL, date TEXT DEFAULT CURRENT_TIMESTAMP)')
-      .run('CREATE TABLE IF NOT EXISTS user (id INTERGER PRIMARY KEY, mail TEXT, detectLimit TEXT, nodes TEXT)', err => {
+      .run('CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, mail TEXT, detectLimit TEXT, nodes TEXT)', err => {
         if (err) { throw err; }
         console.log('database initialized');
         resolve();
@@ -184,12 +184,12 @@ export function getUsers(): Promise<User[]> {
             if (err) {
                 throw err;
             }
-            return rows.map(row => ({
-                id: Number.parseInt(row.id),
+            resolve (rows.map(row => ({
+                id: row.id,
                 mail: row.mail,
                 limit: row.detectLimit,
-                nodeIds: (row.nodeIds as string).split(',').map(s => Number.parseInt(s)),
-            }));
+                nodeIds: row.nodes.length ? (row.nodes as string).split(',').map(s => Number.parseInt(s)) : [],
+            })));
         })
     });
 }
@@ -200,16 +200,16 @@ export function getUserId(mail: string): Promise<number> {
             if (err) {
                 throw err;
             }
-            return row.id;
+            resolve(row?.id);
         })
     });
 }
 
 export function addUser(user: User): Promise<number> {
-    return new Promise<number>(resolve => {
-        db.run('INSERT INTO user (mail, detectLimit, nodeIds) VALUE (?, ?, ?)', [
-            user.id, user.mail, user.limit, user.nodeIds.join(',')
-        ], (err) => {
+    return new Promise<number>(function(resolve) {
+        db.run('INSERT INTO user (mail, detectLimit, nodes) VALUES (?, ?, ?)', [
+            user.mail, user.limit, user.nodeIds.join(',')
+        ], function(err) {
             if (err) {
                 throw err;
             }
@@ -218,15 +218,33 @@ export function addUser(user: User): Promise<number> {
     });
 }
 
-export function updateUser(user: User): Promise<boolean> {
-    return new Promise<boolean>(resolve => {
-        db.run('UPDATE user SET mail = ?, detectLimit = ? , nodeIds = ? WHERE id = ?', [
+export function updateUser(user: User): Promise<void> {
+    return new Promise<void>(function(resolve) {
+        db.run('UPDATE user SET mail = ?, detectLimit = ? , nodes = ? WHERE id = ?', [
             user.mail, user.limit, user.nodeIds.join(','), user.id
-        ], (err) => {
+        ], function(err) {
             if (err) {
                 throw err;
             }
-            resolve(this.lastID);
+            resolve();
+        });
+    });
+}
+
+export function removeUser(userId: number): Promise<void> {
+    return new Promise<void>(resolve => {
+        db.run('DELETE FROM user WHERE id = ?', userId, (err) => {
+            if (err) { throw err; }
+            resolve();
+        });
+    });
+}
+
+export function removeAllUsers(): Promise<void> {
+    return new Promise<void>(resolve => {
+        db.run('DELETE FROM user', (err) => {
+            if (err) { throw err; }
+            resolve();
         });
     });
 }

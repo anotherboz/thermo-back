@@ -17,7 +17,7 @@ export async function add(req: Express.Request, res: Express.Response): Promise<
         return;
     }
 
-    if (req.body.node == null || req.body.value == null) {
+    if (req.body.mail == null || req.body.limit == null || req.body.nodeIds == null) {
         res.sendStatus(400);
         return;
     }
@@ -34,7 +34,6 @@ export async function add(req: Express.Request, res: Express.Response): Promise<
         userId = await Database.addUser(user);
     }
     res.send({ id: userId });
-    res.sendStatus(200);
 }
 
 export async function update(req: Express.Request, res: Express.Response): Promise<void> {
@@ -43,18 +42,18 @@ export async function update(req: Express.Request, res: Express.Response): Promi
         return;
     }
 
-    if (req.body.node == null || req.body.value == null) {
+    if (req.body.mail == null || req.body.limit == null || req.body.nodeIds == null) {
         res.sendStatus(400);
         return;
     }
 
     const user: User = {
-        id: undefined,
+        id: Number.parseInt(req.params['id']),
         mail: req.body.mail,
         limit: req.body.limit,
         nodeIds: req.body.nodeIds
     }
     
     const userId = await Database.updateUser(user);
-    res.sendStatus(200);
+    res.send({ id: user.id });
 }
