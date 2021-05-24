@@ -15,14 +15,14 @@ export async function add(req: Express.Request, res: Express.Response): Promise<
       return;
     }
 
-  if (req.body.node == null || req.body.value == null) {
+  if (req.body.node == null || req.body.value == null || typeof req.body.value !== 'number') {
     res.sendStatus(400);
     return;
   }
 
   const therm: Therm = {
     node: req.body.node,
-    date: req.body.date ?? new Date(),
+    date: req.body.date ? new Date(req.body.date) : new Date(),
     value: req.body.value,  
   }
   
