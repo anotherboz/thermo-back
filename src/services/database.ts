@@ -63,7 +63,7 @@ export function removeAllNodes(): Promise<void> {
 
 export function addTemperature(nodeId: number, value: number, date: Date): Promise<number> {
     const id$ = new Promise<number>((resolve) =>
-    db.run(`INSERT INTO temperature (nodeId, value, date) VALUES (?,?,?)`, [nodeId, value, date], function(err) {
+    db.run(`INSERT INTO temperature (nodeId, value, date) VALUES (?,?,?)`, [nodeId, value, date.toJSON()], function(err) {
         if (err) { throw err; }
         resolve(this.lastID);
     }));
@@ -142,7 +142,7 @@ export function getNodes(): Promise<Node[]> {
 
 export function getTemperatures(node: Node, dateFrom: Date, dateTo: Date): Promise<Node> {
     return new Promise<Node>(resolve => {
-        db.all('SELECT date as date, value FROM temperature WHERE nodeId = ? AND ? <= date AND date < ?', [node.id, dateFrom, dateTo, ], (err , rows) => {
+        db.all('SELECT date as date, value FROM temperature WHERE nodeId = ? AND ? <= date AND date < ?', [node.id, dateFrom.toJSON(), dateTo.toJSON() ], (err , rows) => {
             if (err) { throw err; }
 
             resolve({
