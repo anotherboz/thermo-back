@@ -1,4 +1,43 @@
+#### GET users
+
 GET http://localhost:3000/api/users HTTP/1.1
 Content-Type: application/json
 Authorization: Basic c3VwZXI6c2hpYm91bGV0
 
+#### GET nodes
+GET http://localhost:3000/api/nodes HTTP/1.1
+Content-Type: application/json
+
+#### POST node config
+POST http://localhost:3000/api/node/1/config HTTP/1.1
+Content-Type: application/json
+
+{
+    "config": {
+    "min": 0,
+    "max": 50,
+    "redFrom": 35,
+    "redTo": 50,
+    "yellowFrom": 25,
+    "yellowTo": 35,
+    "minorTicks": 5
+    }
+}
+
+#### POST therm
+POST http://localhost:3000/api/therm HTTP/1.1
+Content-Type: application/json
+
+{
+    "node": "node2",
+    "date": "2022-03-12T13:34:56",
+    "value": 7.35
+}
+
+#### GET therm
+GET  http://localhost:3000/api/therm/1/2022-03-10/2022-03-14 HTTP/1.1
+Content-Type: application/json
+
+#### GET all therm
+GET  http://localhost:3000/api/therms/2022-03-10/2022-03-14 HTTP/1.1
+Content-Type: application/json
