@@ -1,13 +1,15 @@
 import * as Express from 'express';
 import * as UserController from '../controllers/user';
 
-export default function(app: Express.Application) {
-  app.route('/users')
-    .get(UserController.get);
+var router = Express.Router();
 
-  app.route('/user/:id')
-    .patch(UserController.update);
+router.route('/users')
+  .get(UserController.get);
 
-  app.route('/user')
-    .post(UserController.add);
-}
+router.route('/user/:id')
+  .patch(UserController.update);
+
+router.route('/user')
+  .post(UserController.add);
+
+export default router;

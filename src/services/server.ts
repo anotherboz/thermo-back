@@ -23,8 +23,7 @@ app.route('*').options((req, res) => {
 
 export let server;
 export const run = (async () => {
-  therm(app); // register the route
-  user(app);
+  app.use('/api', therm).use('/api', user);
   // start the Express server
   server = app.listen(port, () => {
     // tslint:disable-next-line:no-console
