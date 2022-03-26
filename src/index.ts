@@ -5,3 +5,4 @@ import * as Database from './services/database';
   await Database.init();
   await Server.run();
 })();
+
